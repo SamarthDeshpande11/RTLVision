@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import {connectDB} from "./src/config/db.js";
 import healthRoutes from './src/routes/healthRoutes.js';
+import authRoutes from './src/routes/authRoutes.js';
 
 dotenv.config();
 
@@ -10,6 +11,8 @@ const app=express();
 app.use(cors());
 app.use(express.json());  
 app.use("/api/health",healthRoutes);
+app.use("/api/auth",authRoutes);
+
 
 app.get('/',(req,res)=>{
     res.send("RTLVision backend is running!!");
