@@ -50,3 +50,26 @@ export const createRTLJob = async (req, res) => {
     });
   }
 };
+
+export const getRTLJobsByProject=async(req,res)=>{
+    try {
+        const {projectId}=req.params;
+
+        const jobs=await RtlJobModel.find({
+            project:projectId,
+            user:req.user._id,
+        }).sort({createdAt:-1});
+
+        res.status(200).json({
+            success:true,
+            count:jobs.length,
+            data:jobs,
+        });
+    } catch (error) {
+        console.error("Get RTL Jobs error: ",error);
+        res.status(500).json({
+            success:false,
+            message:"Server error while fetching RTL jobs",
+        });
+    }
+};

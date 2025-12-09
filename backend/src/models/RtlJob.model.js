@@ -32,8 +32,8 @@ const rtlJobSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "running", "completed", "failed"],
-      default: "pending",
+      enum: ["uploaded", "linting", "visualizing", "completed", "failed"],
+      default: "uploaded",
     },
   },
   { timestamps: true }
