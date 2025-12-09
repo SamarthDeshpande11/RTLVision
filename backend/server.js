@@ -15,7 +15,7 @@ app.use(express.json());
 app.use("/api/health",healthRoutes);
 app.use("/api/auth",authRoutes);
 app.use("/api/projects",projectRoutes);
-app.use("/api/",rtlJobRoutes);
+app.use("/api/projects",rtlJobRoutes);
 
 
 app.get('/',(req,res)=>{

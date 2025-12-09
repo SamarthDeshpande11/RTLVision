@@ -23,6 +23,7 @@ const rtlJobSchema = new mongoose.Schema(
     filePath: {
       type: String,
       required: true,
+      trim:true,
     },
 
     description: {
@@ -32,12 +33,27 @@ const rtlJobSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["uploaded", "linting", "visualizing", "completed", "failed"],
-      default: "uploaded",
+      enum: ["queued","running","success","failed"],
+      default: "queued",
     },
+    statusMessage:{
+        type:String,
+        default:"",
+    },
+    startedAt:{
+        type:Date,
+    },
+    finsihedAt:{
+        type:Date,
+    },
+    logs:[
+        {
+            type:String,
+        },
+    ],
   },
   { timestamps: true }
 );
 
-const RtlJobModel = mongoose.model("RtlJob", rtlJobSchema);
-export default RtlJobModel;
+const RtlJob = mongoose.model("RtlJob", rtlJobSchema);
+export default RtlJob;

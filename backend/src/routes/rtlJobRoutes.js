@@ -1,13 +1,20 @@
-import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
-import { createRTLJob,getRTLJobsByProject } from "../controllers/rtlJobController.js";
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import { createRTLJob,getRTLJobsForProject,getSingleRTLJob,updateRTLJobStatus } from '../controllers/rtlJobController.js';
 
-const router = express.Router();
+const router=express.Router();
 
-// ✅ CREATE RTL JOB FOR A PROJECT
 router
-    .route("/projects/:projectId/rtljobs")
-    .post(protect, createRTLJob)
-    .get(protect, getRTLJobsByProject);
+    .route("/:projectId/jobs")
+    .post(protect,createRTLJob)
+    .get(protect,getRTLJobsForProject);
+
+router 
+    .route("/:projectId/jobs/:jobId")
+    .get(protect,getSingleRTLJob);
+
+router  
+    .route("/:projectId/jobs/:jobId/status")
+    .patch(protect,updateRTLJobStatus);
 
 export default router;
