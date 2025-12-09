@@ -1,20 +1,43 @@
-import express from 'express';
-import { protect } from '../middleware/authMiddleware.js';
-import { createRTLJob,getRTLJobsForProject,getSingleRTLJob,updateRTLJobStatus } from '../controllers/rtlJobController.js';
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import { rtlUpload } from "../config/multer.js";
 
-const router=express.Router();
+import {
+  createRTLJob,
+  getRTLJobsForProject,
+  getSingleRTLJob,
+  updateRTLJobStatus,
+} from "../controllers/rtlJobController.js";
 
-router
-    .route("/:projectId/jobs")
-    .post(protect,createRTLJob)
-    .get(protect,getRTLJobsForProject);
+const router = express.Router();
 
-router 
-    .route("/:projectId/jobs/:jobId")
-    .get(protect,getSingleRTLJob);
 
-router  
-    .route("/:projectId/jobs/:jobId/status")
-    .patch(protect,updateRTLJobStatus);
+router.post(
+  "/:projectId/jobs",
+  protect,
+  rtlUpload.single("rtlFile"),
+  createRTLJob
+);
+
+
+router.get(
+  "/:projectId/jobs",
+  protect,
+  getRTLJobsForProject
+);
+
+
+router.get(
+  "/:projectId/jobs/:jobId",
+  protect,
+  getSingleRTLJob
+);
+
+
+router.patch(
+  "/:projectId/jobs/:jobId/status",
+  protect,
+  updateRTLJobStatus
+);
 
 export default router;

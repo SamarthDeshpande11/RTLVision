@@ -30,7 +30,9 @@ const rtlJobSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
+    originalFileName:{
+      type:String,
+    },
     status: {
       type: String,
       enum: ["queued","running","success","failed"],

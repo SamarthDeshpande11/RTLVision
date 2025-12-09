@@ -50,3 +50,5 @@ Thumbs.db
 temp/
 tmp/
 coverage/
+uploads/
+

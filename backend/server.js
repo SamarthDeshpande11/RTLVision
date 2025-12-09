@@ -15,7 +15,8 @@ app.use(express.json());
 app.use("/api/health",healthRoutes);
 app.use("/api/auth",authRoutes);
 app.use("/api/projects",projectRoutes);
-app.use("/api/projects",rtlJobRoutes);
+app.use("/api/rtl-jobs",rtlJobRoutes);
+app.use("/uploads", express.static("uploads"));
 
 
 app.get('/',(req,res)=>{
