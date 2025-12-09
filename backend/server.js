@@ -5,6 +5,7 @@ import {connectDB} from "./src/config/db.js";
 import healthRoutes from './src/routes/healthRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import projectRoutes from './src/routes/projectRoutes.js';
+import rtlJobRoutes from './src/routes/rtlJobRoutes.js';
 
 dotenv.config();
 
@@ -14,6 +15,8 @@ app.use(express.json());
 app.use("/api/health",healthRoutes);
 app.use("/api/auth",authRoutes);
 app.use("/api/projects",projectRoutes);
+app.use("/api/rtl-jobs",rtlJobRoutes);
+
 
 app.get('/',(req,res)=>{
     res.send("RTLVision backend is running!!");
