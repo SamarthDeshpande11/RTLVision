@@ -8,6 +8,8 @@ import {
   getSingleRTLJob,
   updateRTLJobStatus,
 } from "../controllers/rtlJobController.js";
+import { triggerRTLSimulation } from "../controllers/simulationController.js";
+
 
 const router = express.Router();
 
@@ -40,4 +42,9 @@ router.patch(
   updateRTLJobStatus
 );
 
+router.post(
+  "/:projectId/jobs/:jobId/simulate",
+  protect,
+  triggerRTLSimulation
+);
 export default router;

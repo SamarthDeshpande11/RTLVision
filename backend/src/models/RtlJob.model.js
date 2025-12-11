@@ -53,6 +53,11 @@ const rtlJobSchema = new mongoose.Schema(
             type:String,
         },
     ],
+    statusMessage:{
+      type:String,
+      default:"",
+    },
+
   },
   { timestamps: true }
 );
