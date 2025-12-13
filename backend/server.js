@@ -6,6 +6,8 @@ import healthRoutes from './src/routes/healthRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import projectRoutes from './src/routes/projectRoutes.js';
 import rtlJobRoutes from './src/routes/rtlJobRoutes.js';
+import simulationRoutes from "./src/routes/simulationRoutes.js";
+
 
 dotenv.config();
 
@@ -17,6 +19,7 @@ app.use("/api/auth",authRoutes);
 app.use("/api/projects",projectRoutes);
 app.use("/api/rtl-jobs",rtlJobRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api/simulate", simulationRoutes);
 
 
 app.get('/',(req,res)=>{

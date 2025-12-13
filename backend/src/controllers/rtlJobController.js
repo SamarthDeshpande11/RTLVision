@@ -4,7 +4,7 @@ import Project from "../models/Project.model.js";
 export const createRTLJob = async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { jobName, description } = req.body;
+    const { jobName, description } = req.file;
 
     if (!jobName) {
       return res.status(400).json({
