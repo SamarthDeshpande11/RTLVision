@@ -6,6 +6,7 @@ import RtlJob from "../models/RtlJob.model.js";
 export const triggerRTLSimulation = async (req, res) => {
   try {
     const { projectId, jobId } = req.params;
+    console.log("Trigger simulation for projectId:", projectId, "jobId:", jobId, "user:", req.user._id);
 
     const job = await RtlJob.findOne({
       _id: jobId,
@@ -14,14 +15,24 @@ export const triggerRTLSimulation = async (req, res) => {
     });
 
     if (!job) {
+      console.log("Job not found");
       return res.status(404).json({
         success: false,
         message: "RTL Job not found",
       });
     }
 
+    console.log("Job found:", job._id, "designPath:", job.designPath, "testbenchPath:", job.testbenchPath);
+
+    // Backward compatibility: if old job has filePath instead of designPath
+    if (!job.designPath && job.filePath) {
+      job.designPath = job.filePath;
+      job.testbenchPath = job.filePath; // Assuming single file, but adjust if needed
+    }
+
     // 🔒 Validate required files
     if (!job.designPath || !job.testbenchPath) {
+      console.log("Missing designPath or testbenchPath");
       return res.status(400).json({
         success: false,
         message: "Design file or testbench file missing",
@@ -31,6 +42,9 @@ export const triggerRTLSimulation = async (req, res) => {
     // Absolute paths INSIDE container
     const designPath = path.join("/app", job.designPath);
     const testbenchPath = path.join("/app", job.testbenchPath);
+
+    console.log("Absolute designPath:", designPath, "exists:", fs.existsSync(designPath));
+    console.log("Absolute testbenchPath:", testbenchPath, "exists:", fs.existsSync(testbenchPath));
 
     if (!fs.existsSync(designPath) || !fs.existsSync(testbenchPath)) {
       job.status = "failed";
@@ -47,17 +61,22 @@ export const triggerRTLSimulation = async (req, res) => {
 
     // Runtime directory for this job
     const runtimeDir = path.join("/app/runtime_jobs", job._id.toString());
+    console.log("Creating runtime dir:", runtimeDir);
     fs.mkdirSync(runtimeDir, { recursive: true });
 
     const simBinary = path.join(runtimeDir, "sim.out");
     const waveformPath = path.join(runtimeDir, "waveform.vcd");
+
+    console.log("Sim binary:", simBinary, "Waveform path:", waveformPath);
 
     // Update job → running
     job.status = "running";
     job.statusMessage = "Simulation running";
     job.startedAt = new Date();
     job.logs.push("🚀 Simulation started");
+    console.log("Saving job to running status");
     await job.save();
+    console.log("Job saved to running");
 
     /**
      * REAL ICARUS VERILOG FLOW
