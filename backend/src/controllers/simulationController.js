@@ -1,5 +1,5 @@
-import path from "path";
 import fs from "fs";
+import path from "path";
 import { exec } from "child_process";
 import RtlJob from "../models/RtlJob.model.js";
 
@@ -7,9 +7,6 @@ export const triggerRTLSimulation = async (req, res) => {
   try {
     const { projectId, jobId } = req.params;
 
-    /* -----------------------------
-       1️⃣ Find RTL Job (Secure)
-    ----------------------------- */
     const job = await RtlJob.findOne({
       _id: jobId,
       project: projectId,
@@ -23,16 +20,22 @@ export const triggerRTLSimulation = async (req, res) => {
       });
     }
 
-    /* -----------------------------
-       2️⃣ Resolve RTL File Path
-       (IMPORTANT FIX)
-    ----------------------------- */
-    const rtlFilePath = path.join("/app", job.filePath);
+    // 🔒 Validate required files
+    if (!job.designPath || !job.testbenchPath) {
+      return res.status(400).json({
+        success: false,
+        message: "Design file or testbench file missing",
+      });
+    }
 
-    if (!fs.existsSync(rtlFilePath)) {
+    // Absolute paths INSIDE container
+    const designPath = path.join("/app", job.designPath);
+    const testbenchPath = path.join("/app", job.testbenchPath);
+
+    if (!fs.existsSync(designPath) || !fs.existsSync(testbenchPath)) {
       job.status = "failed";
-      job.statusMessage = "RTL file not found";
-      job.logs.push(`❌ RTL file missing at ${rtlFilePath}`);
+      job.statusMessage = "RTL files not found inside container";
+      job.logs.push(`❌ Missing files: ${designPath} or ${testbenchPath}`);
       job.finishedAt = new Date();
       await job.save();
 
@@ -42,66 +45,66 @@ export const triggerRTLSimulation = async (req, res) => {
       });
     }
 
-    /* -----------------------------
-       3️⃣ Prepare Runtime Folder
-    ----------------------------- */
-    const jobDir = path.join("/app/runtime_jobs", job._id.toString());
-    fs.mkdirSync(jobDir, { recursive: true });
+    // Runtime directory for this job
+    const runtimeDir = path.join("/app/runtime_jobs", job._id.toString());
+    fs.mkdirSync(runtimeDir, { recursive: true });
 
-    const outputBinary = path.join(jobDir, "sim.out");
-    const compileLog = path.join(jobDir, "compile.log");
+    const simBinary = path.join(runtimeDir, "sim.out");
+    const waveformPath = path.join(runtimeDir, "waveform.vcd");
 
-    /* -----------------------------
-       4️⃣ Reset Job State (NEW RUN)
-    ----------------------------- */
+    // Update job → running
     job.status = "running";
-    job.statusMessage = "";
-    job.logs = []; // 🔥 Clear old logs
+    job.statusMessage = "Simulation running";
     job.startedAt = new Date();
-    job.finishedAt = null;
     job.logs.push("🚀 Simulation started");
     await job.save();
 
-    /* -----------------------------
-       5️⃣ REAL ICARUS COMMAND
-    ----------------------------- */
-    const compileCmd = `
-      iverilog -o "${outputBinary}" "${rtlFilePath}" 2> "${compileLog}" &&
-      vvp "${outputBinary}" >> "${compileLog}"
+    /**
+     * REAL ICARUS VERILOG FLOW
+     * - Compile design + testbench
+     * - Run simulation
+     * - Testbench generates waveform.vcd
+     */
+    const cmd = `
+      iverilog -g2012 -o ${simBinary} ${designPath} ${testbenchPath} &&
+      vvp ${simBinary}
     `;
 
-    /* -----------------------------
-       6️⃣ Execute Simulation
-    ----------------------------- */
-    exec(compileCmd, async (error) => {
-      const logContent = fs.existsSync(compileLog)
-        ? fs.readFileSync(compileLog, "utf-8")
-        : "";
+    console.log("Design path:", designPath);
+    console.log("Testbench path:", testbenchPath);
+    console.log("Files exist:", fs.existsSync(designPath), fs.existsSync(testbenchPath));
+    console.log("Runtime dir:", runtimeDir);
+    console.log("Sim binary:", simBinary);
+    console.log("Command:", cmd.trim());
 
-      if (error) {
-        job.status = "failed";
-        job.statusMessage = "Compilation / Simulation failed";
-        job.logs.push("❌ Simulation failed");
-        job.logs.push(logContent || error.message);
+    exec(cmd, { timeout: 60000 }, async (error, stdout, stderr) => {
+      try {
+        console.log("Exec result - error:", !!error, "stdout length:", stdout?.length, "stderr length:", stderr?.length);
+        if (error) {
+          console.log("Simulation error details:", error.message);
+          console.log("Stderr:", stderr);
+          job.status = "failed";
+          job.statusMessage = "Compilation / Simulation failed";
+          job.logs.push("❌ Simulation failed");
+          job.logs.push(stderr || error.message);
+          job.finishedAt = new Date();
+          await job.save();
+          return;
+        }
+
+        // Success
+        console.log("Simulation success");
+        job.status = "success";
+        job.statusMessage = "Simulation completed successfully";
+        job.logs.push("✅ Simulation completed successfully");
+        job.waveformPath = `runtime_jobs/${job._id}/waveform.vcd`;
         job.finishedAt = new Date();
         await job.save();
-        return;
+      } catch (err) {
+        console.error("Error updating job status:", err);
       }
-
-      /* -----------------------------
-         7️⃣ SUCCESS PATH
-      ----------------------------- */
-      job.status = "success";
-      job.statusMessage = "Simulation completed successfully";
-      job.logs.push("✅ Simulation completed successfully");
-      if (logContent) job.logs.push(logContent);
-      job.finishedAt = new Date();
-      await job.save();
     });
 
-    /* -----------------------------
-       8️⃣ Immediate Response
-    ----------------------------- */
     return res.status(200).json({
       success: true,
       message: "Simulation triggered",

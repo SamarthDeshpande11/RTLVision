@@ -7,7 +7,6 @@ const rtlJobSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
@@ -17,50 +16,48 @@ const rtlJobSchema = new mongoose.Schema(
     jobName: {
       type: String,
       required: true,
-      trim: true,
-    },
-
-    filePath: {
-      type: String,
-      required: true,
-      trim:true,
     },
 
     description: {
       type: String,
-      default: "",
-    },
-    originalFileName:{
-      type:String,
-    },
-    status: {
-      type: String,
-      enum: ["queued","running","success","failed"],
-      default: "queued",
-    },
-    statusMessage:{
-        type:String,
-        default:"",
-    },
-    startedAt:{
-        type:Date,
-    },
-    finishedAt:{
-        type:Date,
-    },
-    logs:[
-        {
-            type:String,
-        },
-    ],
-    statusMessage:{
-      type:String,
-      default:"",
     },
 
+    // ✅ uploaded file paths
+    designPath: {
+      type: String,
+      required: true,
+    },
+
+    testbenchPath: {
+      type: String,
+      required: true,
+    },
+
+    // ✅ simulation outputs
+    waveformPath: {
+      type: String,
+    },
+
+    status: {
+      type: String,
+      enum: ["queued", "running", "success", "failed"],
+      default: "queued",
+    },
+
+    statusMessage: {
+      type: String,
+      default: "",
+    },
+
+    logs: {
+      type: [String],
+      default: [],
+    },
+
+    startedAt: Date,
+    finishedAt: Date,
   },
   { timestamps: true }
 );
 
-const RtlJob = mongoose.model("RtlJob", rtlJobSchema);
-export default RtlJob;
+export default mongoose.model("RtlJob", rtlJobSchema);

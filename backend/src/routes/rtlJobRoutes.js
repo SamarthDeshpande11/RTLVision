@@ -17,7 +17,10 @@ const router = express.Router();
 router.post(
   "/:projectId/jobs",
   protect,
-  rtlUpload.single("file"),
+  rtlUpload.fields([
+    {name:"rtlFile",maxCount:1},
+    {name:"tbFile",maxCount:1},
+  ]),
   createRTLJob
 );
 

@@ -13,10 +13,10 @@ export const createRTLJob = async (req, res) => {
       });
     }
 
-    if (!req.file) {
+    if (!req.files||!req.files.rtlFile||!req.files.tbFile) {
       return res.status(400).json({
         success: false,
-        message: "RTL file is required",
+        message: "Both RTL File and testbench file are required",
       });
     }
 
@@ -28,17 +28,18 @@ export const createRTLJob = async (req, res) => {
       });
     }
 
-    // ✅ REAL FILE PATH FROM MULTER
-    const filePath = `uploads/rtl/${req.file.filename}`;
-
+    const rtlFile=req.files.rtlFile[0];
+    const tbFile=req.files.tbFile[0];
 
     const rtlJob = await RtlJob.create({
       project: projectId,
       user: req.user._id,
       jobName,
-      filePath,
       description,
+      designPath:`uploads/rtl/${rtlFile.filename}`,
+      testbenchPath:`uploads/rtl/${tbFile.filename}`,
       status: "queued",
+      logs:[],
     });
 
     return res.status(201).json({
@@ -46,14 +47,10 @@ export const createRTLJob = async (req, res) => {
       data: rtlJob,
     });
   }  catch (error) {
-        console.error("🔥 FULL ERROR OBJECT 🔥");
-        console.error(error);
-        console.error("🔥 STACK 🔥");
-        console.error(error.stack);
-
+        console.error("Create RTL Job error: ",error);
         return res.status(500).json({
-          success: false,
-          message: error.message || "Unknown server error",
+          success:false,
+          message:"Server error while creating RTL Job",
         });
   }
 
