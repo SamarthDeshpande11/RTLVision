@@ -1,0 +1,25 @@
+#! /usr/bin/vvp
+:ivl_version "11.0 (stable)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/system.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/vhdl_sys.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/vhdl_textio.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/v2005_math.vpi";
+:vpi_module "/usr/lib/x86_64-linux-gnu/ivl/va_math.vpi";
+S_0x60b4bc6ffdc0 .scope module, "demo" "demo" 2 1;
+ .timescale 0 0;
+    .port_info 0 /INPUT 1 "a";
+    .port_info 1 /INPUT 1 "b";
+    .port_info 2 /OUTPUT 1 "y";
+o0x7694e0638018 .functor BUFZ 1, C4<z>; HiZ drive
+o0x7694e0638048 .functor BUFZ 1, C4<z>; HiZ drive
+L_0x60b4bc745550 .functor AND 1, o0x7694e0638018, o0x7694e0638048, C4<1>, C4<1>;
+v0x60b4bc702190_0 .net "a", 0 0, o0x7694e0638018;  0 drivers
+v0x60b4bc701f30_0 .net "b", 0 0, o0x7694e0638048;  0 drivers
+v0x60b4bc745430_0 .net "y", 0 0, L_0x60b4bc745550;  1 drivers
+# The file index is used to find the file name in the following table.
+:file_names 3;
+    "N/A";
+    "<interactive>";
+    "/app/uploads/rtl/1765722647513-demo.v";
