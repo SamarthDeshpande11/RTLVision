@@ -1,5 +1,5 @@
-import fs from "fs";
 import path from "path";
+import fs from "fs";
 import { exec } from "child_process";
 import RtlJob from "../models/RtlJob.model.js";
 
@@ -7,6 +7,9 @@ export const triggerRTLSimulation = async (req, res) => {
   try {
     const { projectId, jobId } = req.params;
 
+    /* -----------------------------
+       1️⃣ Find RTL Job (Secure)
+    ----------------------------- */
     const job = await RtlJob.findOne({
       _id: jobId,
       project: projectId,
@@ -14,53 +17,96 @@ export const triggerRTLSimulation = async (req, res) => {
     });
 
     if (!job) {
-      return res.status(404).json({ success: false, message: "Job not found" });
+      return res.status(404).json({
+        success: false,
+        message: "RTL Job not found",
+      });
     }
 
-    // Update status → running
+    /* -----------------------------
+       2️⃣ Resolve RTL File Path
+       (IMPORTANT FIX)
+    ----------------------------- */
+    const rtlFilePath = path.join("/app", job.filePath);
+
+    if (!fs.existsSync(rtlFilePath)) {
+      job.status = "failed";
+      job.statusMessage = "RTL file not found";
+      job.logs.push(`❌ RTL file missing at ${rtlFilePath}`);
+      job.finishedAt = new Date();
+      await job.save();
+
+      return res.status(400).json({
+        success: false,
+        message: "RTL file not found inside container",
+      });
+    }
+
+    /* -----------------------------
+       3️⃣ Prepare Runtime Folder
+    ----------------------------- */
+    const jobDir = path.join("/app/runtime_jobs", job._id.toString());
+    fs.mkdirSync(jobDir, { recursive: true });
+
+    const outputBinary = path.join(jobDir, "sim.out");
+    const compileLog = path.join(jobDir, "compile.log");
+
+    /* -----------------------------
+       4️⃣ Reset Job State (NEW RUN)
+    ----------------------------- */
     job.status = "running";
+    job.statusMessage = "";
+    job.logs = []; // 🔥 Clear old logs
     job.startedAt = new Date();
+    job.finishedAt = null;
     job.logs.push("🚀 Simulation started");
     await job.save();
 
-    // Paths
-    const runtimeDir = path.join("runtime_jobs", jobId);
-    const rtlSource = path.join(runtimeDir, "design.v");
-    const outputFile = path.join(runtimeDir, "sim.out");
+    /* -----------------------------
+       5️⃣ REAL ICARUS COMMAND
+    ----------------------------- */
+    const compileCmd = `
+      iverilog -o "${outputBinary}" "${rtlFilePath}" 2> "${compileLog}" &&
+      vvp "${outputBinary}" >> "${compileLog}"
+    `;
 
-    // Ensure runtime directory exists
-    fs.mkdirSync(runtimeDir, { recursive: true });
+    /* -----------------------------
+       6️⃣ Execute Simulation
+    ----------------------------- */
+    exec(compileCmd, async (error) => {
+      const logContent = fs.existsSync(compileLog)
+        ? fs.readFileSync(compileLog, "utf-8")
+        : "";
 
-    // Copy uploaded RTL file into runtime folder
-    fs.copyFileSync(job.filePath, rtlSource);
-
-    // Compile + simulate
-    const compileCmd = `iverilog -o ${outputFile} ${rtlSource}`;
-    const runCmd = `vvp ${outputFile}`;
-
-    exec(`${compileCmd} && ${runCmd}`, async (error, stdout, stderr) => {
-      if (error || stderr) {
+      if (error) {
         job.status = "failed";
-        job.statusMessage = "Simulation failed";
-        job.logs.push(stderr || error.message);
+        job.statusMessage = "Compilation / Simulation failed";
+        job.logs.push("❌ Simulation failed");
+        job.logs.push(logContent || error.message);
         job.finishedAt = new Date();
         await job.save();
         return;
       }
 
+      /* -----------------------------
+         7️⃣ SUCCESS PATH
+      ----------------------------- */
       job.status = "success";
       job.statusMessage = "Simulation completed successfully";
-      job.logs.push(stdout || "Simulation completed");
+      job.logs.push("✅ Simulation completed successfully");
+      if (logContent) job.logs.push(logContent);
       job.finishedAt = new Date();
       await job.save();
     });
 
+    /* -----------------------------
+       8️⃣ Immediate Response
+    ----------------------------- */
     return res.status(200).json({
       success: true,
-      message: "Simulation triggered successfully",
-      jobId,
+      message: "Simulation triggered",
+      jobId: job._id,
     });
-
   } catch (err) {
     console.error("Simulation error:", err);
     return res.status(500).json({

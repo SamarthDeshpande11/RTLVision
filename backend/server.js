@@ -19,7 +19,7 @@ app.use("/api/auth",authRoutes);
 app.use("/api/projects",projectRoutes);
 app.use("/api/rtl-jobs",rtlJobRoutes);
 app.use("/uploads", express.static("uploads"));
-app.use("/api/simulate", simulationRoutes);
+app.use("/api/simulation", simulationRoutes);
 
 
 app.get('/',(req,res)=>{

@@ -45,7 +45,7 @@ const rtlJobSchema = new mongoose.Schema(
     startedAt:{
         type:Date,
     },
-    finsihedAt:{
+    finishedAt:{
         type:Date,
     },
     logs:[

@@ -9,5 +9,10 @@ router.post(
   protect,
   triggerRTLSimulation
 );
+router.get(
+  "/:projectId/jobs/:jobId/simulate",
+  protect,
+  triggerRTLSimulation
+)
 
 export default router;

@@ -4,7 +4,7 @@ import Project from "../models/Project.model.js";
 export const createRTLJob = async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { jobName, description } = req.file;
+    const { jobName, description } = req.body;
 
     if (!jobName) {
       return res.status(400).json({
@@ -29,7 +29,8 @@ export const createRTLJob = async (req, res) => {
     }
 
     // ✅ REAL FILE PATH FROM MULTER
-    const filePath = `/uploads/${req.file.filename}`;
+    const filePath = `uploads/rtl/${req.file.filename}`;
+
 
     const rtlJob = await RtlJob.create({
       project: projectId,
@@ -44,13 +45,18 @@ export const createRTLJob = async (req, res) => {
       success: true,
       data: rtlJob,
     });
-  } catch (error) {
-    console.error("Create RTL Job error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error while creating RTL Job",
-    });
+  }  catch (error) {
+        console.error("🔥 FULL ERROR OBJECT 🔥");
+        console.error(error);
+        console.error("🔥 STACK 🔥");
+        console.error(error.stack);
+
+        return res.status(500).json({
+          success: false,
+          message: error.message || "Unknown server error",
+        });
   }
+
 };
 
 /* ===============================
@@ -153,7 +159,7 @@ export const updateRTLJobStatus = async (req, res) => {
     }
 
     if ((status === "success" || status === "failed") && !job.finishedAt) {
-      job.finsihedAt = new Date();
+      job.finishedAt = new Date();
     }
 
     // ✅ Append logs safely
