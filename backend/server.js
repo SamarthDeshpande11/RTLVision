@@ -7,7 +7,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import projectRoutes from './src/routes/projectRoutes.js';
 import rtlJobRoutes from './src/routes/rtlJobRoutes.js';
 import simulationRoutes from "./src/routes/simulationRoutes.js";
-
+import lintRoutes from "./src/routes/lintRoutes.js"
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ app.use("/api/projects",projectRoutes);
 app.use("/api/rtl-jobs",rtlJobRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/simulation", simulationRoutes);
-
+app.use("/api/lint",lintRoutes);
 
 app.get('/',(req,res)=>{
     res.send("RTLVision backend is running!!");

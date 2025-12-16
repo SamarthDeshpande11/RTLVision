@@ -1,6 +1,6 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
-import { triggerRTLSimulation } from "../controllers/simulationController.js";
+import { downloadWaveform, triggerRTLSimulation } from "../controllers/simulationController.js";
 
 const router = express.Router();
 
@@ -10,9 +10,9 @@ router.post(
   triggerRTLSimulation
 );
 router.get(
-  "/:projectId/jobs/:jobId/simulate",
+  "/:projectId/jobs/:jobId/waveform",
   protect,
-  triggerRTLSimulation
+  downloadWaveform
 )
 
 export default router;

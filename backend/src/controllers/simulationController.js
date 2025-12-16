@@ -107,3 +107,52 @@ export const triggerRTLSimulation = async (req, res) => {
     });
   }
 };
+export const downloadWaveform = async (req, res) => {
+  try {
+    const { projectId, jobId } = req.params;
+
+    const job = await RtlJob.findOne({
+      _id: jobId,
+      project: projectId,
+      user: req.user._id,
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "RTL Job not found",
+      });
+    }
+
+    if (!job.waveformPath) {
+      return res.status(404).json({
+        success: false,
+        message: "Waveform not generated for this job",
+      });
+    }
+
+    const absoluteWaveformPath = path.join("/app", job.waveformPath);
+
+    if (!fs.existsSync(absoluteWaveformPath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Waveform file missing on server",
+      });
+    }
+
+    // Stream file
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=waveform-${jobId}.vcd`
+    );
+
+    fs.createReadStream(absoluteWaveformPath).pipe(res);
+  } catch (error) {
+    console.error("Waveform download error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to download waveform",
+    });
+  }
+};
