@@ -17,10 +17,10 @@ app.use(express.json());
 app.use("/api/health",healthRoutes);
 app.use("/api/auth",authRoutes);
 app.use("/api/projects",projectRoutes);
+app.use("/api/projects",lintRoutes);
 app.use("/api/rtl-jobs",rtlJobRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/simulation", simulationRoutes);
-app.use("/api/lint",lintRoutes);
 
 app.get('/',(req,res)=>{
     res.send("RTLVision backend is running!!");
